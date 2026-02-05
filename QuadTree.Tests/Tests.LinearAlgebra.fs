@@ -30,31 +30,18 @@ let op_mult x y =
     | Some(a), Some(b) -> Some(a * b)
     | _ -> None
 
+let leaf_v v = qtree.Leaf << UserValue <| Some v
+let leaf_n () = qtree.Leaf << UserValue <| None
 
 [<Fact>]
 let ``Simple vxm. All sizes are power of two.`` () =
     let m =
         let tree =
             Matrix.qtree.Node(
-                Matrix.qtree.Node(
-                    Matrix.qtree.Leaf(UserValue(None)),
-                    Matrix.qtree.Leaf(UserValue(Some(1))),
-                    Matrix.qtree.Leaf(UserValue(Some(3))),
-                    Matrix.qtree.Leaf(UserValue(Some(2)))
-                ),
-                Matrix.qtree.Node(
-                    Matrix.qtree.Leaf(UserValue(Some(1))),
-                    Matrix.qtree.Leaf(UserValue(None)),
-                    Matrix.qtree.Leaf(UserValue(Some(2))),
-                    Matrix.qtree.Leaf(UserValue(Some(3)))
-                ),
+                Matrix.qtree.Node(leaf_n (), leaf_v 1, leaf_v 3, leaf_v 2),
+                Matrix.qtree.Node(leaf_v 1, leaf_n (), leaf_v 2, leaf_v 3),
                 Matrix.qtree.Leaf(UserValue(None)),
-                Matrix.qtree.Node(
-                    Matrix.qtree.Leaf(UserValue(Some(1))),
-                    Matrix.qtree.Leaf(UserValue(Some(2))),
-                    Matrix.qtree.Leaf(UserValue(Some(3))),
-                    Matrix.qtree.Leaf(UserValue(None))
-                )
+                Matrix.qtree.Node(leaf_v 1, leaf_v 2, leaf_v 3, leaf_n ())
             )
 
         let store = Matrix.Storage(4UL<storageSize>, tree)
@@ -95,30 +82,10 @@ let ``Simple vxm. 3 * (3x4)`` () =
     let m =
         let tree =
             Matrix.qtree.Node(
-                Matrix.qtree.Node(
-                    Matrix.qtree.Leaf(UserValue(None)),
-                    Matrix.qtree.Leaf(UserValue(Some(1))),
-                    Matrix.qtree.Leaf(UserValue(Some(3))),
-                    Matrix.qtree.Leaf(UserValue(Some(2)))
-                ),
-                Matrix.qtree.Node(
-                    Matrix.qtree.Leaf(UserValue(Some(1))),
-                    Matrix.qtree.Leaf(UserValue(None)),
-                    Matrix.qtree.Leaf(UserValue(Some(2))),
-                    Matrix.qtree.Leaf(UserValue(Some(3)))
-                ),
-                Matrix.qtree.Node(
-                    Matrix.qtree.Leaf(UserValue(None)),
-                    Matrix.qtree.Leaf(UserValue(None)),
-                    Matrix.qtree.Leaf(Dummy),
-                    Matrix.qtree.Leaf(Dummy)
-                ),
-                Matrix.qtree.Node(
-                    Matrix.qtree.Leaf(UserValue(Some(1))),
-                    Matrix.qtree.Leaf(UserValue(Some(2))),
-                    Matrix.qtree.Leaf(Dummy),
-                    Matrix.qtree.Leaf(Dummy)
-                )
+                Matrix.qtree.Node(leaf_n (), leaf_v 1, leaf_v 3, leaf_v 2),
+                Matrix.qtree.Node(leaf_v 1, leaf_n (), leaf_v 2, leaf_v 3),
+                Matrix.qtree.Node(leaf_n (), leaf_n (), Matrix.qtree.Leaf(Dummy), Matrix.qtree.Leaf(Dummy)),
+                Matrix.qtree.Node(leaf_v 1, leaf_v 2, Matrix.qtree.Leaf(Dummy), Matrix.qtree.Leaf(Dummy))
             )
 
         let store = Matrix.Storage(4UL<storageSize>, tree)
@@ -164,25 +131,10 @@ let ``Simple vxm. 4 * (4x3).`` () =
     let m =
         let tree =
             Matrix.qtree.Node(
-                Matrix.qtree.Node(
-                    Matrix.qtree.Leaf(UserValue(None)),
-                    Matrix.qtree.Leaf(UserValue(Some(1))),
-                    Matrix.qtree.Leaf(UserValue(Some(3))),
-                    Matrix.qtree.Leaf(UserValue(Some(2)))
-                ),
-                Matrix.qtree.Node(
-                    Matrix.qtree.Leaf(UserValue(Some(1))),
-                    Matrix.qtree.Leaf(Dummy),
-                    Matrix.qtree.Leaf(UserValue(Some(2))),
-                    Matrix.qtree.Leaf(Dummy)
-                ),
+                Matrix.qtree.Node(leaf_n (), leaf_v 1, leaf_v 3, leaf_v 2),
+                Matrix.qtree.Node(leaf_v 1, Matrix.qtree.Leaf(Dummy), leaf_v 2, Matrix.qtree.Leaf(Dummy)),
                 Matrix.qtree.Leaf(UserValue(None)),
-                Matrix.qtree.Node(
-                    Matrix.qtree.Leaf(UserValue(Some(1))),
-                    Matrix.qtree.Leaf(Dummy),
-                    Matrix.qtree.Leaf(UserValue(Some(3))),
-                    Matrix.qtree.Leaf(Dummy)
-                )
+                Matrix.qtree.Node(leaf_v 1, Matrix.qtree.Leaf(Dummy), leaf_v 3, Matrix.qtree.Leaf(Dummy))
             )
 
         let store = Matrix.Storage(4UL<storageSize>, tree)
@@ -230,41 +182,16 @@ let ``Simple vxm. 3 * (3x5)`` () =
         let tree =
             Matrix.qtree.Node(
                 Matrix.qtree.Node(
-                    Matrix.qtree.Node(
-                        Matrix.qtree.Leaf(UserValue(None)),
-                        Matrix.qtree.Leaf(UserValue(Some(1))),
-                        Matrix.qtree.Leaf(UserValue(Some(3))),
-                        Matrix.qtree.Leaf(UserValue(Some(2)))
-                    ),
-                    Matrix.qtree.Node(
-                        Matrix.qtree.Leaf(UserValue(Some(1))),
-                        Matrix.qtree.Leaf(UserValue(None)),
-                        Matrix.qtree.Leaf(UserValue(Some(2))),
-                        Matrix.qtree.Leaf(UserValue(Some(3)))
-                    ),
-                    Matrix.qtree.Node(
-                        Matrix.qtree.Leaf(UserValue(None)),
-                        Matrix.qtree.Leaf(UserValue(None)),
-                        Matrix.qtree.Leaf(Dummy),
-                        Matrix.qtree.Leaf(Dummy)
-                    ),
-                    Matrix.qtree.Node(
-                        Matrix.qtree.Leaf(UserValue(Some(1))),
-                        Matrix.qtree.Leaf(UserValue(Some(2))),
-                        Matrix.qtree.Leaf(Dummy),
-                        Matrix.qtree.Leaf(Dummy)
-                    )
+                    Matrix.qtree.Node(leaf_n (), leaf_v 1, leaf_v 3, leaf_v 2),
+                    Matrix.qtree.Node(leaf_v 1, leaf_n (), leaf_v 2, leaf_v 3),
+                    Matrix.qtree.Node(leaf_n (), leaf_n (), Matrix.qtree.Leaf(Dummy), Matrix.qtree.Leaf(Dummy)),
+                    Matrix.qtree.Node(leaf_v 1, leaf_v 2, Matrix.qtree.Leaf(Dummy), Matrix.qtree.Leaf(Dummy))
                 ),
                 Matrix.qtree.Node(
-                    Matrix.qtree.Node(
-                        Matrix.qtree.Leaf(UserValue(None)),
-                        Matrix.qtree.Leaf(Dummy),
-                        Matrix.qtree.Leaf(UserValue(Some(1))),
-                        Matrix.qtree.Leaf(Dummy)
-                    ),
+                    Matrix.qtree.Node(leaf_n (), Matrix.qtree.Leaf(Dummy), leaf_v 1, Matrix.qtree.Leaf(Dummy)),
                     Matrix.qtree.Leaf(Dummy),
                     Matrix.qtree.Node(
-                        Matrix.qtree.Leaf(UserValue(None)),
+                        leaf_n (),
                         Matrix.qtree.Leaf(Dummy),
                         Matrix.qtree.Leaf(Dummy),
                         Matrix.qtree.Leaf(Dummy)
@@ -316,38 +243,18 @@ let ``Simple mxm`` () =
     // DDDD
     let tree =
         qtree.Node(
-            qtree.Leaf << UserValue <| Some 2,
-            qtree.Node(
-                qtree.Leaf << UserValue <| Some 2,
-                qtree.Leaf Dummy,
-                qtree.Leaf << UserValue <| Some 2,
-                qtree.Leaf Dummy
-            ),
-            qtree.Node(
-                qtree.Leaf << UserValue <| Some 2,
-                qtree.Leaf << UserValue <| Some 2,
-                qtree.Leaf Dummy,
-                qtree.Leaf Dummy
-            ),
-            qtree.Node(qtree.Leaf << UserValue <| Some 2, qtree.Leaf Dummy, qtree.Leaf Dummy, qtree.Leaf Dummy)
+            leaf_v 2,
+            qtree.Node(leaf_v 2, qtree.Leaf Dummy, leaf_v 2, qtree.Leaf Dummy),
+            qtree.Node(leaf_v 2, leaf_v 2, qtree.Leaf Dummy, qtree.Leaf Dummy),
+            qtree.Node(leaf_v 2, qtree.Leaf Dummy, qtree.Leaf Dummy, qtree.Leaf Dummy)
         )
 
     let tree_expected =
         qtree.Node(
-            qtree.Leaf << UserValue <| Some 12,
-            qtree.Node(
-                qtree.Leaf << UserValue <| Some 12,
-                qtree.Leaf Dummy,
-                qtree.Leaf << UserValue <| Some 12,
-                qtree.Leaf Dummy
-            ),
-            qtree.Node(
-                qtree.Leaf << UserValue <| Some 12,
-                qtree.Leaf << UserValue <| Some 12,
-                qtree.Leaf Dummy,
-                qtree.Leaf Dummy
-            ),
-            qtree.Node(qtree.Leaf << UserValue <| Some 12, qtree.Leaf Dummy, qtree.Leaf Dummy, qtree.Leaf Dummy)
+            leaf_v 12,
+            qtree.Node(leaf_v 12, qtree.Leaf Dummy, leaf_v 12, qtree.Leaf Dummy),
+            qtree.Node(leaf_v 12, leaf_v 12, qtree.Leaf Dummy, qtree.Leaf Dummy),
+            qtree.Node(leaf_v 12, qtree.Leaf Dummy, qtree.Leaf Dummy, qtree.Leaf Dummy)
         )
 
     let m1 =
