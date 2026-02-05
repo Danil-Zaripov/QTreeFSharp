@@ -127,7 +127,7 @@ let mxm op_add op_mult (m1: Matrix.SparseMatrix<'a>) (m2: Matrix.SparseMatrix<'b
             let halfSize = size / 2UL
 
             // Double check this code
-            let nw1xnw2, ne1xsw2, nw1xne2, ne1xse2, sw1xnw2, se1xsw2, sw1xne2, se1xse2 =
+            let nw1_x_nw2, ne1_x_sw2, nw1_x_ne2, ne1_x_se2, sw1_x_nw2, se1_x_sw2, sw1_x_ne2, se1_x_se2 =
                 (multiply halfSize nw1 nw2),
                 (multiply halfSize ne1 sw2),
                 (multiply halfSize nw1 ne2),
@@ -137,52 +137,52 @@ let mxm op_add op_mult (m1: Matrix.SparseMatrix<'a>) (m2: Matrix.SparseMatrix<'b
                 (multiply halfSize sw1 ne2),
                 (multiply halfSize se1 se2)
 
-            match nw1xnw2, ne1xsw2, nw1xne2, ne1xse2, sw1xnw2, se1xsw2, sw1xne2, se1xse2 with
-            | Result.Success(tnw1xnw2, nvals_nw1xnw2),
-              Result.Success(tne1xsw2, nvals_ne1xsw2),
-              Result.Success(tnw1xne2, nvals_nw1xne2),
-              Result.Success(tne1xse2, nvals_ne1xse2),
-              Result.Success(tsw1xnw2, nvals_sw1xnw2),
-              Result.Success(tse1xsw2, nvals_se1xsw2),
-              Result.Success(tsw1xne2, nvals_sw1xne2),
-              Result.Success(tse1xse2, nvals_se1xse2) ->
+            match nw1_x_nw2, ne1_x_sw2, nw1_x_ne2, ne1_x_se2, sw1_x_nw2, se1_x_sw2, sw1_x_ne2, se1_x_se2 with
+            | Result.Success(tnw1_x_nw2, nvals_nw1_x_nw2),
+              Result.Success(tne1_x_sw2, nvals_ne1_x_sw2),
+              Result.Success(tnw1_x_ne2, nvals_nw1_x_ne2),
+              Result.Success(tne1_x_se2, nvals_ne1_x_se2),
+              Result.Success(tsw1_x_nw2, nvals_sw1_x_nw2),
+              Result.Success(tse1_x_sw2, nvals_se1_x_sw2),
+              Result.Success(tsw1_x_ne2, nvals_sw1_x_ne2),
+              Result.Success(tse1_x_se2, nvals_se1_x_se2) ->
                 let nrows = (uint64 halfSize) * 1UL<Matrix.nrows>
                 let ncols = (uint64 halfSize) * 1UL<Matrix.ncols>
                 let storageSize = halfSize
 
-                let nw1xnw2 =
-                    Matrix.SparseMatrix(nrows, ncols, nvals_nw1xnw2, Matrix.Storage(storageSize, tnw1xnw2))
+                let nw1_x_nw2 =
+                    Matrix.SparseMatrix(nrows, ncols, nvals_nw1_x_nw2, Matrix.Storage(storageSize, tnw1_x_nw2))
 
-                let ne1xsw2 =
-                    Matrix.SparseMatrix(nrows, ncols, nvals_ne1xsw2, Matrix.Storage(storageSize, tne1xsw2))
+                let ne1_x_sw2 =
+                    Matrix.SparseMatrix(nrows, ncols, nvals_ne1_x_sw2, Matrix.Storage(storageSize, tne1_x_sw2))
 
-                let nw1xne2 =
-                    Matrix.SparseMatrix(nrows, ncols, nvals_nw1xne2, Matrix.Storage(storageSize, tnw1xne2))
+                let nw1_x_ne2 =
+                    Matrix.SparseMatrix(nrows, ncols, nvals_nw1_x_ne2, Matrix.Storage(storageSize, tnw1_x_ne2))
 
-                let ne1xse2 =
-                    Matrix.SparseMatrix(nrows, ncols, nvals_ne1xse2, Matrix.Storage(storageSize, tne1xse2))
+                let ne1_x_se2 =
+                    Matrix.SparseMatrix(nrows, ncols, nvals_ne1_x_se2, Matrix.Storage(storageSize, tne1_x_se2))
 
-                let sw1xnw2 =
-                    Matrix.SparseMatrix(nrows, ncols, nvals_sw1xnw2, Matrix.Storage(storageSize, tsw1xnw2))
+                let sw1_x_nw2 =
+                    Matrix.SparseMatrix(nrows, ncols, nvals_sw1_x_nw2, Matrix.Storage(storageSize, tsw1_x_nw2))
 
-                let se1xsw2 =
-                    Matrix.SparseMatrix(nrows, ncols, nvals_se1xsw2, Matrix.Storage(storageSize, tse1xsw2))
+                let se1_x_sw2 =
+                    Matrix.SparseMatrix(nrows, ncols, nvals_se1_x_sw2, Matrix.Storage(storageSize, tse1_x_sw2))
 
-                let sw1xne2 =
-                    Matrix.SparseMatrix(nrows, ncols, nvals_sw1xne2, Matrix.Storage(storageSize, tsw1xne2))
+                let sw1_x_ne2 =
+                    Matrix.SparseMatrix(nrows, ncols, nvals_sw1_x_ne2, Matrix.Storage(storageSize, tsw1_x_ne2))
 
-                let se1xse2 =
-                    Matrix.SparseMatrix(nrows, ncols, nvals_se1xse2, Matrix.Storage(storageSize, tse1xse2))
+                let se1_x_se2 =
+                    Matrix.SparseMatrix(nrows, ncols, nvals_se1_x_se2, Matrix.Storage(storageSize, tse1_x_se2))
 
                 let mAdd m1 (m2: Matrix.SparseMatrix<_>) =
                     match m2.storage.data with
                     | Matrix.qtree.Leaf Dummy -> Result.Success m1
                     | _ -> Matrix.map2 m1 m2 op_add
 
-                let rnw = mAdd nw1xnw2 ne1xsw2
-                let rne = mAdd nw1xne2 ne1xse2
-                let rsw = mAdd sw1xnw2 se1xsw2
-                let rse = mAdd sw1xne2 se1xse2
+                let rnw = mAdd nw1_x_nw2 ne1_x_sw2
+                let rne = mAdd nw1_x_ne2 ne1_x_se2
+                let rsw = mAdd sw1_x_nw2 se1_x_sw2
+                let rse = mAdd sw1_x_ne2 se1_x_se2
 
                 match rnw, rne, rsw, rse with
                 | Result.Success(nw), Result.Success(ne), Result.Success(sw), Result.Success(se) ->
