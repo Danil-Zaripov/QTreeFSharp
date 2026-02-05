@@ -107,7 +107,12 @@ type MXMError<'value1, 'value2, 'value3> =
     | MatrixAdditionProblem of Matrix.Error<'value3, 'value3>
 
 
-let mxm op_add op_mult (m1: Matrix.SparseMatrix<'a>) (m2: Matrix.SparseMatrix<'b>) =
+let mxm
+    (op_add: 'c option -> 'c option -> 'c option)
+    (op_mult: 'a option -> 'b option -> 'c option)
+    (m1: Matrix.SparseMatrix<'a>)
+    (m2: Matrix.SparseMatrix<'b>)
+    =
 
     let rec shrink tree (size: uint64<storageSize>) =
         match tree with
