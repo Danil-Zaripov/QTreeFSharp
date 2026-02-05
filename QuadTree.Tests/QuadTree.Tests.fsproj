@@ -11,6 +11,7 @@
     <Compile Include="Tests.Matrix.fs" />
     <Compile Include="Tests.LinearAlgebra.fs" />
     <Compile Include="Tests.BFS.fs" />
+    <Compile Include="Tests.TriangleCount.fs" />
   </ItemGroup>
 
   <ItemGroup>

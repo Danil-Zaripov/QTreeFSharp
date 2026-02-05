@@ -15,7 +15,20 @@ let printMatrix (matrix: SparseMatrix<_>) =
     printfn "      size: %A" matrix.storage.size
     printfn "      Data: %A" matrix.storage.data
 
+let leaf_v v = qtree.Leaf << UserValue <| Some v
+let leaf_n () = qtree.Leaf << UserValue <| None
 
+let op_add x y =
+    match (x, y) with
+    | Some(a), Some(b) -> Some(a + b)
+    | Some(a), _
+    | _, Some(a) -> Some(a)
+    | _ -> None
+
+let op_mult x y =
+    match (x, y) with
+    | Some(a), Some(b) -> Some(a * b)
+    | _ -> None
 (*
 N,1,1,N
 3,2,2,3
@@ -349,3 +362,56 @@ let ``Condensation of sparse`` () =
         SparseMatrix(4UL<nrows>, 3UL<ncols>, 0UL<nvals>, Storage(4UL<storageSize>, tree))
 
     Assert.Equal(expected.storage.data, actual.storage.data)
+
+[<Fact>]
+let ``fold -> sum`` () =
+    // 222D
+    // 222D
+    // 222D
+    // DDDD
+    let tree =
+        qtree.Node(
+            leaf_v 2,
+            qtree.Node(leaf_v 2, qtree.Leaf Dummy, leaf_v 2, qtree.Leaf Dummy),
+            qtree.Node(leaf_v 2, leaf_v 2, qtree.Leaf Dummy, qtree.Leaf Dummy),
+            qtree.Node(leaf_v 2, qtree.Leaf Dummy, qtree.Leaf Dummy, qtree.Leaf Dummy)
+        )
+
+    let m1 =
+        SparseMatrix(3UL<nrows>, 3UL<ncols>, 9UL<nvals>, Matrix.Storage(4UL<storageSize>, tree))
+
+    let expected = 18
+
+    let actual = Option.get <| Matrix.fold op_add None m1
+
+    Assert.Equal(expected, actual)
+
+[<Fact>]
+let ``4x4 lower triangle`` () =
+    // 2222
+    // 2222
+    // 2222
+    // 2222
+    let tree = leaf_v 2
+
+    // 2NNN
+    // 22NN
+    // 222N
+    // 2222
+    let tree_expected =
+        qtree.Node(
+            qtree.Node(leaf_v 2, leaf_n (), leaf_v 2, leaf_v 2),
+            leaf_n (),
+            leaf_v 2,
+            qtree.Node(leaf_v 2, leaf_n (), leaf_v 2, leaf_v 2)
+        )
+
+    let m1 =
+        SparseMatrix(4UL<nrows>, 4UL<ncols>, 16UL<nvals>, Matrix.Storage(4UL<storageSize>, tree))
+
+    let expected =
+        SparseMatrix(4UL<nrows>, 4UL<ncols>, 10UL<nvals>, Matrix.Storage(4UL<storageSize>, tree_expected))
+
+    let actual = getLowerTriangle m1
+
+    Assert.Equal(expected, actual)

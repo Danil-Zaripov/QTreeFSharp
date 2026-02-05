@@ -180,48 +180,98 @@ let map2 (matrix1: SparseMatrix<_>) (matrix2: SparseMatrix<_>) f =
     else
         (Error.InconsistentSizeOfArguments(matrix1, matrix2)) |> Result.Failure
 
+let fold (folder: 'State option -> 'T option -> 'State option) (state: 'State option) (matrix: SparseMatrix<'T>) =
+    let rec traverse tree (size: uint64<storageSize>) (state: 'State option) =
+        match tree with
+        | Leaf Dummy -> state
+        | Leaf(UserValue v) ->
+            let mutable accum = state
+            let area = (uint64 size) * (uint64 size)
 
-(*
-let rec map (op: 'TCell1 -> 'TCell2)  (m1:Matrix<'TCell1>) =
-    match m1 with
-    | Leaf(s,v1) ->
-        Leaf (s, op v1)
-    | Node (s,x1,x2,x3,x4) ->
-        mkNode s (map op x1) (map op x2) (map op x3) (map op x4)
+            for _ in 1UL .. area do
+                accum <- folder accum v
+
+            accum
+        | Node(nw, ne, sw, se) ->
+            let halfSize = size / 2UL
+
+            let nwState = traverse nw halfSize state
+            let neState = traverse ne halfSize nwState
+            let swState = traverse sw halfSize neState
+            let seState = traverse se halfSize swState
+
+            seState
+
+    let storageSize = matrix.storage.size
+
+    let tree = matrix.storage.data
+    traverse tree storageSize state
 
 
-let multScalar opAdd (x:uint) y =
-    if x = 1u
-    then y
-    else
-        List.init (int x) (fun _ -> y)
-        |> List.reduce opAdd
+let getLowerTriangle (matrix: SparseMatrix<_>) =
 
-let compose opAdd (opMult: 'TCell1 -> 'TCell2 -> 'TCell3) (m1:Matrix<'TCell1>) (m2:Matrix<'TCell2>) =
-    
-    let rec go m1 m2 =
-        match (m1, m2) with
-        | Leaf(s,v1), Leaf(_,v2) ->
-            Leaf (s, multScalar opAdd s (opMult v1 v2))
-        | Node (s,x1,x2,x3,x4), Node (_,y1,y2,y3,y4) ->
-            let z1 = map2 opAdd (go x1 y1) (go x2 y3)
-            let z2 = map2 opAdd (go x1 y2) (go x2 y4)
-            let z3 = map2 opAdd (go x3 y1) (go x4 y3)
-            let z4 = map2 opAdd (go x3 y2) (go x4 y4)
-            mkNode s z1 z2 z3 z4
-        | Node (s,x1,x2,x3,x4), Leaf (_,v) ->
-            let l = Leaf(s / 2u,v)                
-            let z1 = map2 opAdd (go x1 l) (go x2 l)                
-            let z3 = map2 opAdd (go x3 l) (go x4 l)                
-            mkNode s z1 z1 z3 z3                
-        | Leaf (_,v), Node (s,x1,x2,x3,x4) ->
-            let l = Leaf(s / 2u,v)
-            let z1 = map2 opAdd (go l x1) (go l x3)
-            let z2 = map2 opAdd (go l x2) (go l x4)                
-            mkNode s z1 z2 z1 z2
-            
-    if m1.Size = m2.Size
-    then go m1 m2
-    else failwith $"Matrices should be of equals size, but m1.Size = {m1.Size} and m2.Size = {m2.Size}"
+    // returns tree, removed_nvals
+    let rec makeNone tree (size: uint64<storageSize>) =
+        match tree with
+        | Leaf Dummy
+        | Leaf(UserValue None) -> tree, 0UL<nvals>
+        | Leaf(UserValue(Some _)) -> Leaf(UserValue None), (uint64 <| size * size) * 1UL<nvals>
+        | Node(nw, ne, sw, se) ->
+            let halfSize = size / 2UL
+            let nw_new, nw_removed = makeNone nw halfSize
+            let ne_new, ne_removed = makeNone ne halfSize
+            let sw_new, sw_removed = makeNone sw halfSize
+            let se_new, se_removed = makeNone se halfSize
 
-*)
+            (mkNode nw_new ne_new sw_new se_new), nw_removed + ne_removed + sw_removed + se_removed
+
+    let rec traverse tree size =
+        match tree with
+        | Leaf _ when size = 1UL<storageSize> -> tree, 0UL<nvals>
+        | Leaf Dummy -> Leaf Dummy, 0UL<nvals>
+        | Leaf _ ->
+            let halfSize = size / 2UL
+
+            let nw, nw_removed = traverse tree halfSize
+
+            let ne, ne_removed =
+                Leaf <| UserValue None, (uint64 <| halfSize * halfSize) * 1UL<nvals>
+
+            let sw, sw_removed = tree, 0UL<nvals>
+            let se, se_removed = traverse tree halfSize
+            (mkNode nw ne sw se), nw_removed + ne_removed + sw_removed + se_removed
+        | Node(nw, ne, sw, se) ->
+            let halfSize = size / 2UL
+
+            let nw_new, nw_removed = traverse nw halfSize
+            let ne_new, ne_removed = makeNone ne halfSize
+            let sw_new, sw_removed = sw, 0UL<nvals>
+            let se_new, se_removed = traverse se halfSize
+
+            (mkNode nw_new ne_new sw_new se_new), nw_removed + ne_removed + sw_removed + se_removed
+
+    let storageSize = matrix.storage.size
+    let tree, nvals_removed = traverse matrix.storage.data storageSize
+
+    SparseMatrix(matrix.nrows, matrix.ncols, matrix.nvals - nvals_removed, Storage(storageSize, tree))
+
+let transpose (matrix: SparseMatrix<_>) =
+    let rec traverse tree =
+        match tree with
+        | Leaf _ -> tree
+        | Node(nw, ne, sw, se) ->
+            mkNode
+                (traverse nw)
+                (traverse sw) // ne -> sw
+                (traverse ne) // sw -> ne
+                (traverse se)
+
+    let nrows = (uint64 matrix.ncols) * 1UL<nrows>
+    let ncols = (uint64 matrix.nrows) * 1UL<ncols>
+
+    let tree = traverse matrix.storage.data
+
+    SparseMatrix(nrows, ncols, matrix.nvals, Storage(matrix.storage.size, tree))
+
+let mask (m1: SparseMatrix<'a>) (m2: SparseMatrix<'b>) f =
+    map2 m1 m2 (fun m1 m2 -> if f m2 then m1 else None)
